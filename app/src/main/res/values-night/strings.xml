@@ -1,7 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AI Finance Predictor</string>
 
-    <!-- Prediction Activity Strings -->
+    <!-- Prediction Activity Strings (Dark Theme Translations if needed) -->
     <string name="prediction_title">Expense Prediction</string>
     <string name="prediction_subtitle">Estimate your next month spend in seconds</string>
     <string name="prediction_food_hint">Food Expense</string>
@@ -32,3 +33,4 @@
     <string name="status_high">High Expense</string>
     <string name="status_failed">Failed</string>
 </resources>
+

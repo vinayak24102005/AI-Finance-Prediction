@@ -5,7 +5,6 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +29,8 @@ public class HistoryActivity extends AppCompatActivity {
     private EditText etFromDate;
     private EditText etToDate;
     private DatabaseHelper databaseHelper;
+    private String selectedFromDate;
+    private String selectedToDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,36 +42,34 @@ public class HistoryActivity extends AppCompatActivity {
         tvEmptyHistory = findViewById(R.id.tvEmptyHistory);
         etFromDate = findViewById(R.id.etFromDate);
         etToDate = findViewById(R.id.etToDate);
-        Button btnApplyFilter = findViewById(R.id.btnApplyFilter);
-        Button btnResetFilter = findViewById(R.id.btnResetFilter);
 
         rvExpenses.setLayoutManager(new LinearLayoutManager(this));
-        bindDatePickers();
+        bindPickers();
 
-        btnApplyFilter.setOnClickListener(v -> applyFilter());
-        btnResetFilter.setOnClickListener(v -> {
-            etFromDate.setText("");
-            etToDate.setText("");
-            loadExpenses(null, null);
-        });
+        selectedFromDate = "";
+        selectedToDate = "";
 
-        loadExpenses(null, null);
+        loadAllExpenses();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadExpenses(getTrimmed(etFromDate), getTrimmed(etToDate));
+        applyActiveFilter();
     }
 
-    private void loadExpenses(String fromDate, String toDate) {
+    private void loadAllExpenses() {
+        Cursor cursor = databaseHelper.getAllExpenses();
+        renderList(cursor, getString(R.string.history_empty_default));
+    }
+
+    private void loadExpensesByDateRange(String fromDate, String toDate) {
+        Cursor cursor = databaseHelper.getExpensesByDateRange(fromDate, toDate);
+        renderList(cursor, getString(R.string.history_empty_for_range, fromDate, toDate));
+    }
+
+    private void renderList(Cursor cursor, String emptyMessage) {
         List<ExpenseItem> items = new ArrayList<>();
-        Cursor cursor;
-        if (!TextUtils.isEmpty(fromDate) && !TextUtils.isEmpty(toDate)) {
-            cursor = databaseHelper.getExpensesByDateRange(fromDate, toDate);
-        } else {
-            cursor = databaseHelper.getAllExpenses();
-        }
 
         while (cursor.moveToNext()) {
             double amount = cursor.getDouble(cursor.getColumnIndexOrThrow("amount"));
@@ -82,6 +81,7 @@ public class HistoryActivity extends AppCompatActivity {
         cursor.close();
 
         if (items.isEmpty()) {
+            tvEmptyHistory.setText(emptyMessage);
             tvEmptyHistory.setVisibility(View.VISIBLE);
             rvExpenses.setVisibility(View.GONE);
             return;
@@ -92,18 +92,40 @@ public class HistoryActivity extends AppCompatActivity {
         rvExpenses.setAdapter(new ExpenseAdapter(items));
     }
 
-    private void bindDatePickers() {
-        etFromDate.setOnClickListener(v -> showDatePicker(etFromDate));
-        etToDate.setOnClickListener(v -> showDatePicker(etToDate));
+    private void bindPickers() {
+        etFromDate.setOnClickListener(v -> showDatePicker(true));
+        etToDate.setOnClickListener(v -> showDatePicker(false));
     }
 
-    private void showDatePicker(EditText target) {
+    private void showDatePicker(boolean isFromDate) {
         final Calendar calendar = Calendar.getInstance();
+        String currentValue = isFromDate ? selectedFromDate : selectedToDate;
+        if (!TextUtils.isEmpty(currentValue) && currentValue.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            int year = Integer.parseInt(currentValue.substring(0, 4));
+            int month = Integer.parseInt(currentValue.substring(5, 7)) - 1;
+            int day = Integer.parseInt(currentValue.substring(8, 10));
+            calendar.set(year, month, day);
+        }
+
         DatePickerDialog picker = new DatePickerDialog(
                 this,
-                (view, year, month, dayOfMonth) -> target.setText(
-                        String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth)
-                ),
+                (view, year, month, dayOfMonth) -> {
+                    String selectedDate = String.format(
+                            Locale.getDefault(),
+                            "%04d-%02d-%02d",
+                            year,
+                            month + 1,
+                            dayOfMonth
+                    );
+                    if (isFromDate) {
+                        selectedFromDate = selectedDate;
+                        etFromDate.setText(selectedDate);
+                    } else {
+                        selectedToDate = selectedDate;
+                        etToDate.setText(selectedDate);
+                    }
+                    applyDateFilterIfReady();
+                },
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH)
@@ -111,30 +133,26 @@ public class HistoryActivity extends AppCompatActivity {
         picker.show();
     }
 
-    private void applyFilter() {
-        String fromDate = getTrimmed(etFromDate);
-        String toDate = getTrimmed(etToDate);
-
-        if (TextUtils.isEmpty(fromDate) && TextUtils.isEmpty(toDate)) {
-            loadExpenses(null, null);
+    private void applyDateFilterIfReady() {
+        if (TextUtils.isEmpty(selectedFromDate) || TextUtils.isEmpty(selectedToDate)) {
             return;
         }
-
-        if (TextUtils.isEmpty(fromDate) || TextUtils.isEmpty(toDate)) {
-            Toast.makeText(this, "Please select both From and To dates", Toast.LENGTH_SHORT).show();
+        if (selectedFromDate.compareTo(selectedToDate) > 0) {
+            Toast.makeText(this, R.string.history_invalid_date_range, Toast.LENGTH_SHORT).show();
             return;
         }
-
-        if (fromDate.compareTo(toDate) > 0) {
-            Toast.makeText(this, "From date cannot be after To date", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        loadExpenses(fromDate, toDate);
+        loadExpensesByDateRange(selectedFromDate, selectedToDate);
     }
 
-    private String getTrimmed(EditText editText) {
-        return editText.getText() == null ? "" : editText.getText().toString().trim();
+    private void applyActiveFilter() {
+        if (!TextUtils.isEmpty(selectedFromDate)
+                && !TextUtils.isEmpty(selectedToDate)
+                && selectedFromDate.compareTo(selectedToDate) <= 0) {
+            loadExpensesByDateRange(selectedFromDate, selectedToDate);
+            return;
+        }
+        loadAllExpenses();
     }
+
 }
 

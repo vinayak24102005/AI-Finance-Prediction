@@ -42,6 +42,7 @@ public class PredictionActivity extends AppCompatActivity {
     private TextInputEditText etFood;
     private TextInputEditText etTransport;
     private TextInputEditText etShopping;
+    private TextInputEditText etBudget;
     private Button btnPredict;
     private ProgressBar progressPrediction;
     private TextView tvPredictionStatus;
@@ -50,7 +51,6 @@ public class PredictionActivity extends AppCompatActivity {
     private TextView tvSmartSuggestion;
 
     private RequestQueue requestQueue;
-    private DatabaseHelper databaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +60,7 @@ public class PredictionActivity extends AppCompatActivity {
         etFood = findViewById(R.id.etFood);
         etTransport = findViewById(R.id.etTransport);
         etShopping = findViewById(R.id.etShopping);
+        etBudget = findViewById(R.id.etBudget);
         btnPredict = findViewById(R.id.btnPredict);
         progressPrediction = findViewById(R.id.progressPrediction);
         tvPredictionStatus = findViewById(R.id.tvPredictionStatus);
@@ -68,7 +69,6 @@ public class PredictionActivity extends AppCompatActivity {
         tvSmartSuggestion = findViewById(R.id.tvSmartSuggestion);
 
         requestQueue = Volley.newRequestQueue(getApplicationContext());
-        databaseHelper = new DatabaseHelper(this);
 
         btnPredict.setOnClickListener(v -> fetchPrediction());
     }
@@ -77,8 +77,10 @@ public class PredictionActivity extends AppCompatActivity {
         String foodText = getText(etFood);
         String transportText = getText(etTransport);
         String shoppingText = getText(etShopping);
+        String budgetText = getText(etBudget);
 
-        if (TextUtils.isEmpty(foodText) || TextUtils.isEmpty(transportText) || TextUtils.isEmpty(shoppingText)) {
+        if (TextUtils.isEmpty(foodText) || TextUtils.isEmpty(transportText)
+                || TextUtils.isEmpty(shoppingText) || TextUtils.isEmpty(budgetText)) {
             Toast.makeText(this, R.string.error_empty_fields, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -86,16 +88,18 @@ public class PredictionActivity extends AppCompatActivity {
         double food;
         double transport;
         double shopping;
+        double budget;
         try {
             food = Double.parseDouble(foodText);
             transport = Double.parseDouble(transportText);
             shopping = Double.parseDouble(shoppingText);
+            budget = Double.parseDouble(budgetText);
         } catch (NumberFormatException e) {
             Toast.makeText(this, R.string.error_invalid_numbers, Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (food < 0 || transport < 0 || shopping < 0) {
+        if (food < 0 || transport < 0 || shopping < 0 || budget < 0) {
             Toast.makeText(this, R.string.error_negative_values, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -112,10 +116,11 @@ public class PredictionActivity extends AppCompatActivity {
 
         setLoading(true, getString(R.string.prediction_validating));
         clearResults();
-        runPredictionRequest(requestBody, food, transport, shopping);
+        runPredictionRequest(requestBody, food, transport, shopping, budget);
     }
 
-    private void runPredictionRequest(JSONObject requestBody, double food, double transport, double shopping) {
+    private void runPredictionRequest(JSONObject requestBody, double food, double transport,
+                                      double shopping, double budget) {
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST,
                 PREDICTION_URL,
@@ -134,7 +139,7 @@ public class PredictionActivity extends AppCompatActivity {
                         return;
                     }
 
-                    renderPrediction(predictedExpense, food, transport, shopping);
+                    renderPrediction(predictedExpense, food, transport, shopping, budget);
                 },
                 error -> {
                     setLoading(false, "");
@@ -174,57 +179,48 @@ public class PredictionActivity extends AppCompatActivity {
         tvPredictionStatus.setTextColor(ContextCompat.getColor(this, R.color.status_pending));
     }
 
-    private void renderPrediction(double predictedExpense, double food, double transport, double shopping) {
-        double income = databaseHelper.getTotalIncome();
-        double savings = income - predictedExpense;
+    private void renderPrediction(double predictedExpense, double food, double transport,
+                                  double shopping, double budget) {
+        double savings = budget - predictedExpense;
 
         String expenseLevel;
         int statusColorRes;
-        int statusStringRes;
         if (predictedExpense < 2000) {
             expenseLevel = getString(R.string.status_low);
             statusColorRes = R.color.status_low;
-            statusStringRes = R.string.status_low;
         } else if (predictedExpense <= 4000) {
             expenseLevel = getString(R.string.status_moderate);
             statusColorRes = R.color.status_moderate;
-            statusStringRes = R.string.status_moderate;
         } else {
             expenseLevel = getString(R.string.status_high);
             statusColorRes = R.color.status_high;
-            statusStringRes = R.string.status_high;
         }
 
         tvPredictionResult.setText(String.format(Locale.getDefault(), "Rs %.2f", predictedExpense));
-        
-        // Format savings with clear label for positive (savings) or negative (overspending)
+
         String savingsText;
         int savingsColor;
         if (savings >= 0) {
-            savingsText = String.format(Locale.getDefault(), "Rs %.2f (Remaining)", savings);
+            savingsText = String.format(Locale.getDefault(), "Rs %.2f (Remaining Budget)", savings);
             savingsColor = R.color.status_low;
         } else {
-            savingsText = String.format(Locale.getDefault(), "Rs %.2f (Overspending)", Math.abs(savings));
+            savingsText = String.format(Locale.getDefault(), "Rs %.2f (Over Budget)", Math.abs(savings));
             savingsColor = R.color.status_high;
         }
         tvExpectedSavings.setText(savingsText);
         tvExpectedSavings.setTextColor(ContextCompat.getColor(this, savingsColor));
-        
+
         tvPredictionStatus.setText(expenseLevel);
         tvPredictionStatus.setTextColor(ContextCompat.getColor(this, statusColorRes));
-        tvSmartSuggestion.setText(buildSuggestion(food, transport, shopping, savings, income, predictedExpense));
-
-        if (income <= 0) {
-            Toast.makeText(this, R.string.error_no_income, Toast.LENGTH_SHORT).show();
-        }
+        tvSmartSuggestion.setText(buildSuggestion(food, transport, shopping, savings, budget, predictedExpense));
     }
 
     private String buildSuggestion(double food, double transport, double shopping,
-                                   double savings, double income, double predictedExpense) {
+                                   double savings, double budget, double predictedExpense) {
         if (savings < 0) {
             return String.format(
                     Locale.getDefault(),
-                    "Overspending alert: projected spend exceeds income by Rs %.2f. Cut down on %s first.",
+                    "Overspending alert: projected spend exceeds your budget by Rs %.2f. Cut down on %s first.",
                     Math.abs(savings),
                     getHighestCategory(food, transport, shopping)
             );
@@ -241,8 +237,8 @@ public class PredictionActivity extends AppCompatActivity {
             return "Shopping is your highest expense. Delay non-essential purchases for 24 hours.";
         }
 
-        if (income > 0 && predictedExpense >= (income * 0.8)) {
-            return "Your predicted spend is close to income. Keep a strict budget this month.";
+        if (budget > 0 && predictedExpense >= (budget * 0.8)) {
+            return "Your predicted spend is close to your budget limit. Keep a strict budget this month.";
         }
 
         return "You are on track. Continue tracking daily to improve savings.";
@@ -292,4 +288,3 @@ public class PredictionActivity extends AppCompatActivity {
     }
 
 }
-

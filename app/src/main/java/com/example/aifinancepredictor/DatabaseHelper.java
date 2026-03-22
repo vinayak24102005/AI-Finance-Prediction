@@ -101,8 +101,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public Cursor getAllExpenses() {
         SQLiteDatabase db = getReadableDatabase();
         return db.rawQuery(
-                "SELECT id, amount, category, date, type FROM " + TABLE_EXPENSES + " ORDER BY id DESC",
+                "SELECT id, amount, category, date, type FROM " + TABLE_EXPENSES + " ORDER BY date DESC, id DESC",
                 null
+        );
+    }
+
+    public Cursor getExpensesByMonth(String yearMonth) {
+        SQLiteDatabase db = getReadableDatabase();
+        return db.rawQuery(
+                "SELECT id, amount, category, date, type FROM " + TABLE_EXPENSES
+                        + " WHERE date LIKE ? ORDER BY date DESC, id DESC",
+                new String[]{yearMonth + "-%"}
         );
     }
 
@@ -110,7 +119,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getReadableDatabase();
         return db.rawQuery(
                 "SELECT id, amount, category, date, type FROM " + TABLE_EXPENSES
-                        + " WHERE date >= ? AND date <= ? ORDER BY id DESC",
+                        + " WHERE date >= ? AND date <= ? ORDER BY date DESC, id DESC",
                 new String[]{fromDate, toDate}
         );
     }
@@ -119,7 +128,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getReadableDatabase();
         return db.rawQuery(
                 "SELECT id, amount, category, date, type FROM " + TABLE_EXPENSES
-                        + " WHERE date = ? ORDER BY id DESC",
+                        + " WHERE date = ? ORDER BY date DESC, id DESC",
                 new String[]{date}
         );
     }
@@ -138,6 +147,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public double getTotalExpenseByDate(String date) {
         return getTotalByTypeAndDate("expense", date);
+    }
+
+    public double getTotalIncomeByMonth(String yearMonth) {
+        return getTotalByTypeAndMonth("income", yearMonth);
+    }
+
+    public double getTotalExpenseByMonth(String yearMonth) {
+        return getTotalByTypeAndMonth("expense", yearMonth);
     }
 
     private double getTotalByType(String type) {
@@ -159,6 +176,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(
                 "SELECT COALESCE(SUM(amount), 0) FROM " + TABLE_EXPENSES + " WHERE type = ? AND date = ?",
                 new String[]{type, date}
+        );
+        double total = 0;
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+        cursor.close();
+        return total;
+    }
+
+    private double getTotalByTypeAndMonth(String type, String yearMonth) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT COALESCE(SUM(amount), 0) FROM " + TABLE_EXPENSES + " WHERE type = ? AND date LIKE ?",
+                new String[]{type, yearMonth + "-%"}
         );
         double total = 0;
         if (cursor.moveToFirst()) {

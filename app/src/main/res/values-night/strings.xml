@@ -8,6 +8,7 @@
     <string name="prediction_food_hint">Food Expense</string>
     <string name="prediction_transport_hint">Transport Expense</string>
     <string name="prediction_shopping_hint">Shopping Expense</string>
+    <string name="prediction_budget_hint">Monthly Budget</string>
     <string name="prediction_button">Predict</string>
     <string name="prediction_result_title">Prediction Result</string>
     <string name="prediction_label_predicted">Predicted Expense</string>
@@ -16,6 +17,25 @@
     <string name="prediction_label_suggestion">Smart Suggestion</string>
     <string name="prediction_placeholder">--</string>
     <string name="prediction_validating">Predicting…</string>
+
+    <!-- History Activity Strings -->
+    <string name="history_title">Transaction History</string>
+    <string name="history_from_date_hint">From Date (yyyy-MM-dd)</string>
+    <string name="history_to_date_hint">To Date (yyyy-MM-dd)</string>
+    <string name="history_empty_default">No transactions found. Add your first transaction.</string>
+    <string name="history_empty_for_range">No transactions found from %1$s to %2$s.</string>
+    <string name="history_invalid_date_range">From date cannot be after To date.</string>
+
+    <!-- Chart Activity Strings -->
+    <string name="chart_title">Expense Analysis</string>
+    <string name="chart_select_month">Select Month</string>
+    <string name="chart_month_hint">Month (yyyy-MM)</string>
+    <string name="chart_no_data">No expense data available to display chart.</string>
+    <string name="chart_no_data_for_month">No data available for %1$s.</string>
+    <string name="chart_income_label">Income</string>
+    <string name="chart_expense_label">Expense</string>
+    <string name="chart_distribution_label">Distribution</string>
+    <string name="chart_summary_month_format">Month: %1$s\nIncome: Rs %2$.2f (%3$.1f%%)\nExpense: Rs %4$.2f (%5$.1f%%)\nBalance: Rs %6$.2f</string>
 
     <!-- Validation Messages -->
     <string name="error_empty_fields">Please enter all values</string>
@@ -33,4 +53,3 @@
     <string name="status_high">High Expense</string>
     <string name="status_failed">Failed</string>
 </resources>
-

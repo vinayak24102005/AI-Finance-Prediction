@@ -245,6 +245,30 @@ cd AI-Finance-Prediction
 ./gradlew testDebug
 ```
 
+### Run on a Small Phone Emulator
+
+Use this once to add a compact test device profile:
+
+1. Open **Android Studio** -> **Device Manager**.
+2. Click **Create device**.
+3. Select **Phone** and choose a small profile (or create custom):
+   - Screen size: **4.0"**
+   - Resolution: **720 x 1280**
+   - RAM: **1536 MB** (or default)
+4. Select a system image (API 34+ recommended) and finish.
+5. Start the emulator and run the `app` configuration.
+
+Optional Windows PowerShell CLI flow:
+
+```powershell
+sdkmanager "system-images;android-34;google_apis;x86_64"
+avdmanager create avd -n SmallPhone_API34 -k "system-images;android-34;google_apis;x86_64" -d "pixel_4"
+emulator -avd SmallPhone_API34
+.\gradlew.bat installDebug
+```
+
+If `avdmanager` asks for a custom hardware profile, press **Enter** to accept defaults.
+
 ## API Endpoints
 
 ### Prediction API

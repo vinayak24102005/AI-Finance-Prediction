@@ -28,16 +28,10 @@ import java.util.Locale;
 
 public class PredictionActivity extends AppCompatActivity {
 
-    // create prediction activity
-// take inputs: food, transport, shopping
-// validate inputs
-// send POST request to API
-// use deployed https URL
-// show loading message
-// parse response (status, predicted_expense)
-// display result
-// handle errors properly
     private static final String PREDICTION_URL = "https://finance-api-254i.onrender.com/predict";
+    private static final int CATEGORY_FOOD = 0;
+    private static final int CATEGORY_TRANSPORT = 1;
+    private static final int CATEGORY_SHOPPING = 2;
 
     private TextInputEditText etFood;
     private TextInputEditText etTransport;
@@ -49,8 +43,10 @@ public class PredictionActivity extends AppCompatActivity {
     private TextView tvPredictionResult;
     private TextView tvExpectedSavings;
     private TextView tvSmartSuggestion;
+    private TextView tvAutofillInfo;
 
     private RequestQueue requestQueue;
+    private DatabaseHelper databaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,10 +63,20 @@ public class PredictionActivity extends AppCompatActivity {
         tvPredictionResult = findViewById(R.id.tvPredictionResult);
         tvExpectedSavings = findViewById(R.id.tvExpectedSavings);
         tvSmartSuggestion = findViewById(R.id.tvSmartSuggestion);
+        tvAutofillInfo = findViewById(R.id.tvAutofillInfo);
 
         requestQueue = Volley.newRequestQueue(getApplicationContext());
+        databaseHelper = new DatabaseHelper(this);
+
+        prefillCurrentMonthExpenseFields();
 
         btnPredict.setOnClickListener(v -> fetchPrediction());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        prefillCurrentMonthExpenseFields();
     }
 
     private void fetchPrediction() {
@@ -196,15 +202,15 @@ public class PredictionActivity extends AppCompatActivity {
             statusColorRes = R.color.status_high;
         }
 
-        tvPredictionResult.setText(String.format(Locale.getDefault(), "Rs %.2f", predictedExpense));
+        tvPredictionResult.setText(getString(R.string.amount_currency_format, predictedExpense));
 
         String savingsText;
         int savingsColor;
         if (savings >= 0) {
-            savingsText = String.format(Locale.getDefault(), "Rs %.2f (Remaining Budget)", savings);
+            savingsText = getString(R.string.savings_remaining_format, savings);
             savingsColor = R.color.status_low;
         } else {
-            savingsText = String.format(Locale.getDefault(), "Rs %.2f (Over Budget)", Math.abs(savings));
+            savingsText = getString(R.string.savings_over_format, Math.abs(savings));
             savingsColor = R.color.status_high;
         }
         tvExpectedSavings.setText(savingsText);
@@ -217,41 +223,54 @@ public class PredictionActivity extends AppCompatActivity {
 
     private String buildSuggestion(double food, double transport, double shopping,
                                    double savings, double budget, double predictedExpense) {
+        int highestCategory = getHighestCategory(food, transport, shopping);
+
         if (savings < 0) {
-            return String.format(
-                    Locale.getDefault(),
-                    "Overspending alert: projected spend exceeds your budget by Rs %.2f. Cut down on %s first.",
+            return getString(
+                    R.string.suggestion_overspending,
                     Math.abs(savings),
-                    getHighestCategory(food, transport, shopping)
+                    getCategoryLabel(highestCategory)
             );
         }
 
-        String highestCategory = getHighestCategory(food, transport, shopping);
-        if ("Food".equals(highestCategory)) {
-            return "Food is your highest expense. Try meal planning and fewer impulse orders.";
-        }
-        if ("Transport".equals(highestCategory)) {
-            return "Transport is your highest expense. Consider pooling or monthly travel passes.";
-        }
-        if ("Shopping".equals(highestCategory)) {
-            return "Shopping is your highest expense. Delay non-essential purchases for 24 hours.";
+        switch (highestCategory) {
+            case CATEGORY_FOOD:
+                return getString(R.string.suggestion_food);
+            case CATEGORY_TRANSPORT:
+                return getString(R.string.suggestion_transport);
+            case CATEGORY_SHOPPING:
+                return getString(R.string.suggestion_shopping);
+            default:
+                break;
         }
 
         if (budget > 0 && predictedExpense >= (budget * 0.8)) {
-            return "Your predicted spend is close to your budget limit. Keep a strict budget this month.";
+            return getString(R.string.suggestion_close_budget);
         }
 
-        return "You are on track. Continue tracking daily to improve savings.";
+        return getString(R.string.suggestion_on_track);
     }
 
-    private String getHighestCategory(double food, double transport, double shopping) {
+    private int getHighestCategory(double food, double transport, double shopping) {
         if (food >= transport && food >= shopping) {
-            return "Food";
+            return CATEGORY_FOOD;
         }
         if (transport >= food && transport >= shopping) {
-            return "Transport";
+            return CATEGORY_TRANSPORT;
         }
-        return "Shopping";
+        return CATEGORY_SHOPPING;
+    }
+
+    private String getCategoryLabel(int category) {
+        switch (category) {
+            case CATEGORY_FOOD:
+                return getString(R.string.category_food);
+            case CATEGORY_TRANSPORT:
+                return getString(R.string.category_transport);
+            case CATEGORY_SHOPPING:
+            default:
+                return getString(R.string.category_shopping);
+        }
     }
 
     private double getDoubleFromResponse(JSONObject response, String key) {
@@ -277,6 +296,37 @@ public class PredictionActivity extends AppCompatActivity {
 
     private String getText(TextInputEditText inputEditText) {
         return inputEditText.getText() == null ? "" : inputEditText.getText().toString().trim();
+    }
+
+    private void prefillCurrentMonthExpenseFields() {
+        if (databaseHelper == null) {
+            return;
+        }
+
+        double foodTotal = databaseHelper.getCurrentMonthExpenseByCategory("Food");
+        double transportTotal = databaseHelper.getCurrentMonthExpenseByCategory("Transport");
+        double shoppingTotal = databaseHelper.getCurrentMonthExpenseByCategory("Shopping");
+
+        boolean didAutofill = false;
+        didAutofill |= setIfEmpty(etFood, foodTotal);
+        didAutofill |= setIfEmpty(etTransport, transportTotal);
+        didAutofill |= setIfEmpty(etShopping, shoppingTotal);
+
+        if (tvAutofillInfo != null) {
+            tvAutofillInfo.setVisibility(didAutofill ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private boolean setIfEmpty(TextInputEditText inputEditText, double value) {
+        if (!TextUtils.isEmpty(getText(inputEditText))) {
+            return false;
+        }
+        inputEditText.setText(formatAmount(value));
+        return true;
+    }
+
+    private String formatAmount(double amount) {
+        return String.format(Locale.getDefault(), "%.2f", amount);
     }
 
     @Override

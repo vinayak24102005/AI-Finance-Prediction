@@ -3,19 +3,36 @@
 
     <!-- Prediction Activity Strings -->
     <string name="prediction_title">Expense Prediction</string>
-    <string name="prediction_subtitle">Estimate your next month spend in seconds</string>
+    <string name="prediction_subtitle">Check likely spending using current month category totals.</string>
+    <string name="prediction_inputs_help">Food, Transport, and Shopping are auto-filled from your current month expenses. You can edit any value before predicting.</string>
+    <string name="prediction_autofill_info">Current month totals were auto-filled in empty category fields.</string>
     <string name="prediction_food_hint">Food Expense</string>
     <string name="prediction_transport_hint">Transport Expense</string>
     <string name="prediction_shopping_hint">Shopping Expense</string>
     <string name="prediction_budget_hint">Monthly Budget</string>
+    <string name="prediction_budget_helper">Enter your planned total budget for this month.</string>
+    <string name="prediction_field_helper">Amount in rupees (Rs)</string>
     <string name="prediction_button">Predict</string>
     <string name="prediction_result_title">Prediction Result</string>
+    <string name="prediction_result_help">You will see predicted expense, remaining budget, expense status, and a simple action tip.</string>
     <string name="prediction_label_predicted">Predicted Expense</string>
     <string name="prediction_label_savings">Expected Savings</string>
     <string name="prediction_label_status">Expense Status</string>
     <string name="prediction_label_suggestion">Smart Suggestion</string>
     <string name="prediction_placeholder">--</string>
-    <string name="prediction_validating">Predicting…</string>
+    <string name="prediction_validating">Predicting...</string>
+    <string name="amount_currency_format">Rs %1$.2f</string>
+    <string name="savings_remaining_format">Rs %1$.2f (Remaining Budget)</string>
+    <string name="savings_over_format">Rs %1$.2f (Over Budget)</string>
+    <string name="suggestion_overspending">Overspending alert: your projected spend exceeds budget by Rs %1$.2f. Reduce %2$s first.</string>
+    <string name="suggestion_food">Food is your highest expense. Try meal planning and limit impulse orders.</string>
+    <string name="suggestion_transport">Transport is your highest expense. Try ride sharing or monthly travel passes.</string>
+    <string name="suggestion_shopping">Shopping is your highest expense. Delay non-essential purchases for 24 hours.</string>
+    <string name="suggestion_close_budget">Your predicted spend is close to your budget. Track daily to avoid overspending.</string>
+    <string name="suggestion_on_track">You are on track. Keep tracking your expenses daily.</string>
+    <string name="category_food">Food</string>
+    <string name="category_transport">Transport</string>
+    <string name="category_shopping">Shopping</string>
 
     <!-- History Activity Strings -->
     <string name="history_title">Transaction History</string>

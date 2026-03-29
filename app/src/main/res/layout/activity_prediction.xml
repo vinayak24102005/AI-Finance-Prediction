@@ -27,6 +27,24 @@
             android:text="@string/prediction_subtitle"
             android:textColor="@color/md3_on_surface_variant" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/prediction_inputs_help"
+            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+            android:textColor="@color/md3_on_surface_variant" />
+
+        <TextView
+            android:id="@+id/tvAutofillInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/prediction_autofill_info"
+            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+            android:textColor="@color/status_pending"
+            android:visibility="gone" />
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -45,7 +63,24 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:hint="@string/prediction_budget_hint"
+                    app:helperText="@string/prediction_budget_helper"
+                    app:startIconDrawable="@android:drawable/ic_menu_manage">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etBudget"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:hint="@string/prediction_food_hint"
+                    app:helperText="@string/prediction_field_helper"
                     app:startIconDrawable="@android:drawable/ic_menu_compass">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -61,6 +96,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:hint="@string/prediction_transport_hint"
+                    app:helperText="@string/prediction_field_helper"
                     app:startIconDrawable="@android:drawable/ic_menu_directions">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -76,25 +112,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:hint="@string/prediction_shopping_hint"
+                    app:helperText="@string/prediction_field_helper"
                     app:startIconDrawable="@android:drawable/ic_menu_agenda">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etShopping"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:hint="@string/prediction_budget_hint"
-                    app:startIconDrawable="@android:drawable/ic_menu_manage">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etBudget"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="numberDecimal" />
@@ -141,6 +163,14 @@
                     android:text="@string/prediction_result_title"
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/prediction_result_help"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="@color/md3_on_surface_variant" />
 
                 <TextView
                     android:layout_width="wrap_content"

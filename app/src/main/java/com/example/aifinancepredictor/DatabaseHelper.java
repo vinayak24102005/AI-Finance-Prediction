@@ -6,6 +6,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     // create sqlite database helper for finance app
@@ -155,6 +159,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public double getTotalExpenseByMonth(String yearMonth) {
         return getTotalByTypeAndMonth("expense", yearMonth);
+    }
+
+    public double getCurrentMonthExpenseByCategory(String category) {
+        String currentYearMonth = new SimpleDateFormat("yyyy-MM", Locale.US).format(new Date());
+        return getExpenseTotalByCategoryAndMonth(category, currentYearMonth);
+    }
+
+    public double getExpenseTotalByCategoryAndMonth(String category, String yearMonth) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT COALESCE(SUM(amount), 0) FROM " + TABLE_EXPENSES
+                        + " WHERE type = ? AND LOWER(category) = LOWER(?) AND date LIKE ?",
+                new String[]{"expense", category, yearMonth + "-%"}
+        );
+        double total = 0;
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+        cursor.close();
+        return total;
     }
 
     private double getTotalByType(String type) {
